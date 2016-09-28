@@ -24,10 +24,13 @@ module.exports = function createDateAgg(config, tlConfig) {
       // This is pretty lame, but its how the "doc_count" metric has to be implemented at the moment
       // It simplifies the aggregation tree walking code considerably
       dateAgg.time_buckets.aggs[metric] = {
+        /*
         bucket_script: {
           buckets_path: '_count',
           script: {inline: '_value', lang: 'expression'}
         }
+        */
+        'avg': {'field': 'hack', 'missing': 0}
       };
     } else if (metric[0] && metric[1]) {
       var metricName = metric[0] + '(' + metric[1] + ')';
