@@ -61,10 +61,33 @@ module.exports = new Datasource('es', {
       fit: 'nearest'
     });
 
+    var extractResp = function (resp) {
+      if (!resp) return resp;
+      if (typeof(resp) != 'object') return resp;
+
+      // list
+      if (resp.hasOwnProperty('length')) {
+        for (let i = 0; i < resp.length; i++) {
+          resp[i] = extractResp(resp[i]);
+        }
+      } else {
+        // dict
+        for (var k in resp) {
+          if (k === 'count') resp[k] = {value: resp['doc_count']}
+          else {
+            resp[k] = extractResp(resp[k]);
+          }
+        }
+      }
+
+      return resp;
+    }
+
     var callWithRequest = tlConfig.server.plugins.elasticsearch.callWithRequest;
 
     var body = buildRequest(config, tlConfig);
     return callWithRequest(tlConfig.request, 'search', body).then(function (resp) {
+      resp = extractResp(resp);
       if (!resp._shards.total) throw new Error('Elasticsearch index not found: ' + config.index);
       return {
         type: 'seriesList',
